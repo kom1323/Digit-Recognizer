@@ -2,18 +2,22 @@ import tkinter as tk
 from PIL import Image, ImageDraw, ImageTk
 import numpy as np
 from tkinter.colorchooser import askcolor
+from tensorflow import keras
 
 class PaintApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Simple Paint App")
-        self.root.geometry("800x600")
+        self.root.geometry("56x56")
+        self.model = keras.models.load_model("56x56_digit_recognizer.keras")
 
         self.color = "black"
         self.line_width = 5
         self.drawing = False
         self.old_x = None
         self.old_y = None
+        
+        self.image_id = 1
 
         menu_bar = tk.Menu(root)
         root.config(menu=menu_bar)
@@ -35,7 +39,7 @@ class PaintApp:
         self.canvas = tk.Canvas(root, bg="white")
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        self.pil_image = Image.new("RGB", (800, 600), "white")
+        self.pil_image = Image.new("RGB", (56, 56), "white")
         self.pil_draw = ImageDraw.Draw(self.pil_image)
         self.photo = ImageTk.PhotoImage(self.pil_image)
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
@@ -71,15 +75,25 @@ class PaintApp:
         self.old_y = None
 
     def clear_canvas(self):
-        self.pil_image = Image.new("RGB", (800, 600), "white")
+        self.pil_image = Image.new("RGB", (56, 56), "white")
         self.pil_draw = ImageDraw.Draw(self.pil_image)
         self.canvas.delete("all")
         self.photo = ImageTk.PhotoImage(self.pil_image)
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
 
     def predict_digit(self):
-        pixel_arr = np.array(self.pil_image)
-        print(pixel_arr)
+        
+
+
+        image = np.array(self.pil_image.convert("L"))
+        image = np.expand_dims(image, axis=0)
+        prediction = self.model.predict(image, batch_size=1)
+        prediction = np.argmax(prediction, axis=-1)
+        print(prediction)
+        
+        # image.save(f"test_{self.image_id}_digit_6.png")
+        # self.image_id += 1
+        
 
     def choose_color(self):
         color = askcolor()[1]
